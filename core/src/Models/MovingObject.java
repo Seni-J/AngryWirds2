@@ -23,6 +23,8 @@ public abstract class MovingObject extends PhysicalObject {
         this.freeze = false;
     }
 
+    public boolean isFrozen(){ return freeze; }
+
     public abstract void accelerate(float dt);
 
     public final void move(float dt){

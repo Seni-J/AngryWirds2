@@ -16,7 +16,7 @@ public class Bird extends MovingObject {
         speed.y -= MovingObject.G * dt;
     }
 
-    public void setSpeed(float x, float y){
-        this.speed = new Vector2(x,y);
+    public void setSpeed(Vector2 speed){
+        this.speed = speed;
     }
 }

@@ -25,12 +25,24 @@ import Models.Wasp;
 public class AngryWirds extends ApplicationAdapter implements InputProcessor {
 	public static final int WORLD_WIDTH = 1850;
 	public static final int WORLD_HEIGHT = 1080;
+	public static final int FLOOR_HEIGHT = 120;
+	private static final int SLINGSHOT_WIDTH = 75;
+	private static final int SLINGSHOT_HEIGHT = 225;
+	private static final int SLINGSHOT_OFFSET = 100; // from left edge
+	private static final int BOARD_WIDTH = 300;
+	private static final int BOARD_HEIGHT = 200;
+	private static final int BOARD_OFFSET = 50; // from left edge
+	private static final float INITIAL_PUSH = 1f; // Multiplication factor on bird launch
 
 	SpriteBatch batch;
 	Texture bg;
+	Texture slingshot;
+	Texture board;
+
 	Bird bird;
 	Wasp wasp;
 	Random alea;
+
 	Scenary scenary;
 
 	ShapeRenderer shapeRenderer;
@@ -43,7 +55,11 @@ public class AngryWirds extends ApplicationAdapter implements InputProcessor {
 
 		batch = new SpriteBatch();
 		bg = new Texture(Gdx.files.internal("background.jpg"));
-		bird = new Bird(100,200,new Vector2(100,100));
+		slingshot = new Texture(Gdx.files.internal("slingshot1.png"));
+		board = new Texture(Gdx.files.internal("panel.png"));
+
+
+		bird = new Bird(100,400,new Vector2(100,100));
 		wasp = new Wasp(100,100,new Vector2(100,100));
 		bird.setFreeze();
 		wasp.setFreeze();
@@ -81,26 +97,17 @@ public class AngryWirds extends ApplicationAdapter implements InputProcessor {
 
 		if(hitObj != null){
 			Gdx.app.log("Test", hitObj.getClass().getName());
-			bird.setPosition(200,200);
+			bird.setPosition(0,400);
 			bird.setFreeze();
 		}
-
-
-		if(Gdx.input.isTouched()){
-			wasp.unFreeze();
-			Vector3 touchPos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
-			camera.unproject(touchPos);
-			//Gdx.app.log(touchPos.toString(),"pos");
-			bird.setSpeed(touchPos.x/6,touchPos.y/6);
-			bird.unFreeze();
-		}
+		wasp.unFreeze();
 		wasp.accelerate(delta);
 		wasp.move(delta);
 		bird.accelerate(delta);
 		bird.move(delta);
 
 		if(bird.getX() > WORLD_WIDTH){
-			bird.setPosition(200,200);
+			bird.setPosition(0,400);
 			bird.setFreeze();
 		}
 	}
@@ -112,16 +119,12 @@ public class AngryWirds extends ApplicationAdapter implements InputProcessor {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.begin();
 		batch.draw(bg, 0, 0, camera.viewportWidth,camera.viewportHeight);
+		batch.draw(slingshot, SLINGSHOT_OFFSET, FLOOR_HEIGHT, SLINGSHOT_WIDTH, SLINGSHOT_HEIGHT);
+		batch.draw(board, BOARD_OFFSET, WORLD_HEIGHT - BOARD_HEIGHT, BOARD_WIDTH, BOARD_HEIGHT);
 		bird.draw(batch);
 		wasp.draw(batch);
 		scenary.draw(batch);
 		batch.end();
-
-
-		/*shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-		shapeRenderer.setColor(Color.BLUE);
-		shapeRenderer.rect(bird.getBoundingRectangle().x,bird.getBoundingRectangle().y,bird.getBoundingRectangle().width,bird.getBoundingRectangle().height);
-		shapeRenderer.end();*/
 	}
 	@Override
 	public boolean keyDown(int keycode) {
@@ -140,7 +143,20 @@ public class AngryWirds extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		Vector3 pointTouched = camera.unproject(new Vector3(screenX, screenY, 0)); // Convert from screen coordinates to camera coordinates
+		if (bird.isFrozen()) {
+			if (bird.getX() == 0)
+			{
+				bird.setSpeed(new Vector2((pointTouched.x - bird.getX()) * INITIAL_PUSH, (pointTouched.y - bird.getY()) * INITIAL_PUSH));
+				bird.unFreeze();
+			} else
+			{
+				bird.setPosition(0, FLOOR_HEIGHT);
+				wasp.unFreeze();
+			}
+		}
 		return false;
+
 	}
 
 	@Override
